@@ -9,4 +9,5 @@ git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 group :development do
   gem 'rspec', '~> 3.0.0'
   gem 'guard-rspec', '~> 4.2.10'
+  gem 'awesome_print'
 end
