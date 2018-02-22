@@ -1,8 +1,7 @@
 file = 'sample_appysphere.log'
 
-
 class AppyParse
-  def parse
-
+  def parse(file)
+    return "Hello"
   end
 end
