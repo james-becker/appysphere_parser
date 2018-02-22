@@ -1,6 +1,8 @@
 file = 'sample_appysphere.log'
 
-def parse_file
 
+class AppyParse
+  def parse
 
+  end
 end
