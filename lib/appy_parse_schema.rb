@@ -11,7 +11,9 @@
       '70.115.253.1' => 1
     }
   },
-
+  {
+    'GET /api/users/{user_id}/get_camera' =>
+  }
 }
 
 

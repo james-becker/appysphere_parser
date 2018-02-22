@@ -6,8 +6,10 @@ describe AppyParse do
   ap = AppyParse.new
   it 'returns a string' do
     file = 'sample_appysphere.log'
-    output = ap.parse(file)
+    output = ap.parseIO(file)
 
-    expect(output).to be_a(String)
+
+    expect(output).to be_a(Hash)
+
   end
 end
