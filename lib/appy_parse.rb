@@ -5,9 +5,12 @@ file = 'sample_appysphere.log'
 class AppyParse
   include Enumerable
 
+  public
+
   def parseIO(file)
     # init hash with nested arrays
-    camera_ip_calls_by_home = Hash.new {|h,k| h[k] = Hash.new(0) }
+    output_camera_ip_calls_by_home = Hash.new {|h,k| h[k] = Hash.new(0) }
+    output_ranking = Hash.new()
 
     response_times = {
       'get_camera'      => [],
@@ -18,48 +21,69 @@ class AppyParse
     }
 
     lines_read = 0
-    IO.foreach(file).grep(/\/api\/users\/[0-9]*\/(get_camera?|get_home?|get_all_cameras?)/) do |line|
+    IO.foreach(file).grep(/\/api\/users\/[0-9]*(\/(get_camera|get_home|get_all_cameras))?[[:blank:]]/) do |line|
       entry = parse_entry(line)
       endpoint = entry['endpoint']
       _method = entry['_method']
       response_time = entry['response_time']
 
-      ap entry
-
-      # The number of times every camera was called segmented per home.
-      if entry['endpoint'] == 'get_camera'
+      if endpoint == 'get_camera'
         response_times['get_camera'] << response_time
         id = entry['home_id']
         ip = entry['ip_camera']
-        camera_ip_calls_by_home[id][ip] += 1
+        output_camera_ip_calls_by_home[id][ip] += 1
       elsif endpoint == 'get_home'
         response_times['get_home'] << response_time
       elsif endpoint == 'get_all_cameras'
         response_times['get_all_cameras'] << response_time
-      elsif _method == 'POST'
+      elsif _method == 'POST' && endpoint == nil
         response_times['POST_user_id'] << response_time
+      elsif _method == 'GET' && endpoint == nil
+        response_times['GET_user_id'] << response_time
       end
-
-
-
-      # The mean (average), median and mode of the response time (connect time + service time) for this URL's
-
-      # Ranking of the devices (get camera) (per service time)
-
-
-
-
-
-
-
-
-
 
       lines_read += 1
     end
-    puts "#{lines_read} lines read"
-    ap camera_ip_calls_by_home
+
+    output_response_times = {
+      'get_camera'      => {
+        'mean'    => find_mean(response_times['get_camera']),
+        'median'  => find_median(response_times['get_camera']),
+        'mode'    => find_mode(response_times['get_camera']),
+      },
+      'get_home'        => {
+        'mean'    => find_mean(response_times['get_home']),
+        'median'  => find_median(response_times['get_home']),
+        'mode'    => find_mode(response_times['get_home']),
+      },
+      'get_all_cameras'        => {
+        'mean'    => find_mean(response_times['get_all_cameras']),
+        'median'  => find_median(response_times['get_all_cameras']),
+        'mode'    => find_mode(response_times['get_all_cameras']),
+      },
+      'POST_user_id'        => {
+        'mean'    => find_mean(response_times['POST_user_id']),
+        'median'  => find_median(response_times['POST_user_id']),
+        'mode'    => find_mode(response_times['POST_user_id']),
+      },
+      'GET_user_id'        => {
+        'mean'    => find_mean(response_times['GET_user_id']),
+        'median'  => find_median(response_times['GET_user_id']),
+        'mode'    => find_mode(response_times['GET_user_id']),
+      }
+    }
+
+    # The number of times every camera was called segmented per home.
+    ap output_camera_ip_calls_by_home
+    # The mean (average), median and mode of the response time (connect time + service time) for this URL's
+    ap output_response_times
+    # Ranking of the devices (get camera) (per service time)
+    ap output_ranking
+
+    puts "Finished; #{lines_read} entries processed."
   end
+
+  private
 
   def parse_entry(line)
     line            = line.split
@@ -87,6 +111,33 @@ class AppyParse
     return entry
   end
 
+  def find_median(array)
+    if !array.is_a?(Array)
+      return nil
+    end
+    sorted = array.sort
+    len = sorted.length
+    median = (sorted[(len - 1) / 2] + sorted[len / 2]) / 2.0
+    return median
+  end
+
+  def find_mean(array)
+    if !array.is_a?(Array)
+      return nil
+    end
+    sum = array.inject(0, :+)
+    mean = sum/array.length
+    return mean
+  end
+
+  def find_mode(array)
+    if !array.is_a?(Array)
+      return nil
+    end
+    freq = array.inject(Hash.new(0)) { |h,v| h[v] += 1; h }
+    mode = array.max_by { |v| freq[v] }
+    return mode
+  end
 end
 
 ap = AppyParse.new
