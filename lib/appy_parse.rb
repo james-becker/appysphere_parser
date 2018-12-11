@@ -1,6 +1,6 @@
 require 'awesome_print'
 require 'time'
-file = 'sample_appysphere.log'
+file = 'sample_iot_parser.log'
 
 class AppyParse
   include Enumerable
